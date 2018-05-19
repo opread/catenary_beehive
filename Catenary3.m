@@ -33,7 +33,7 @@ hive_height = 40;
 hive_max_width = 45;  #+ wood 
 wood_width = 2.4;
 
-for a = 5:0.1:6
+for a = 5.30
   for w =1.20
   
   [x, y] = catenary(s, w, a);;
@@ -67,8 +67,8 @@ for a = 5:0.1:6
     end
     
     print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng')
-    closereq();
-    
+    # closereq();
+    close();
 
   end
 
