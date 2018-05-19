@@ -25,7 +25,7 @@ s = [-50:0.01:50]; % meters
 ## one bee weights a tenth of a gram = 1/10000
 ## lambda = nr of bees per meter * weigh of a bee
 
-pl=1;
+
 ## I needed to tweak the T to get into a workable catenary shape
 
 # dimensions
@@ -33,14 +33,14 @@ hive_height = 40;
 hive_max_width = 45;  #+ wood 
 wood_width = 2.4;
 
-for a = 5:0.5:6
-  subplot(2,2,pl);
-
-  pl=pl+1
-  for w =1.33
-  title(sprintf("Params a,w: %0.2f,%0.2f",a,w));
+for a = 5:0.1:6
+  for w =1.20
+  
   [x, y] = catenary(s, w, a);;
     # draw the catenary curve
+    fig = figure;
+    subplot(1,1,1);
+    title(sprintf("Params a,w: %0.2f,%0.2f",a,w));
     hold on;
     plot(x,y);
     axis([-35 45 0 hive_height]);
@@ -48,7 +48,7 @@ for a = 5:0.5:6
     #save myfile.mat C;
 
     A = [,];
-    for h = 0:wood_width:40 
+    for h = 0:wood_width:44
       i = 3;
       while (i <= rows(C))
          if (C(i-1,2) < h && C(i,2) >= h)
@@ -65,7 +65,10 @@ for a = 5:0.5:6
       endwhile
         
     end
-    print -djpg catenaryHive.jpg
+    
+    print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng')
+    closereq();
+    
 
   end
 
