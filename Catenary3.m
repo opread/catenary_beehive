@@ -3,6 +3,7 @@
 # frame height: 37 to 27 X 300 X 6
 # |----|
 # |____|
+
  
 % Prevent Octave from thinking that this
 % is a function file:
@@ -15,9 +16,25 @@ function [x, y] = catenary(s,w,a)
   # y=a*cosh((x)/a) - a;
     y = w*(cosh(x/a)-1);
 end
-% s, the length of the chain in increments 
 
-s = [-50:0.01:50]; % meters
+
+# numeric search for the corresponding y for a given x in an 2 dim matrix
+function result = find_y_in_matrix(mat,x)
+  i = 3;
+    while (i <= rows(mat))
+      if (mat(i-1,1) < x && mat(i,1) >= x)
+        result =  mat(i,2)
+        
+        break
+      endif  
+      i += 1;
+    end
+end     
+        
+        
+        
+
+
 
 
 ## http://www.beginningbeekeeping.com/BeeFaqs.htm
@@ -27,6 +44,8 @@ s = [-50:0.01:50]; % meters
 
 
 ## I needed to tweak the T to get into a workable catenary shape
+% s, the length of the chain in increments used to calculate the catenary
+s = [-50:0.01:50]; % meters
 
 # dimensions
 hive_height = 40;
@@ -39,10 +58,10 @@ for a = 5.30
   [x, y] = catenary(s, w, a);;
     # draw the catenary curve
     fig = figure;
-    subplot(1,1,1);
+    ax1 = subplot(2,1,1);
     title(sprintf("Params a,w: %0.2f,%0.2f",a,w));
     hold on;
-    plot(x,y);
+    plot(ax1,x,y);
     axis([-35 45 0 hive_height]);
     C = [x; y]';
     #save myfile.mat C;
@@ -55,7 +74,7 @@ for a = 5.30
            new_row = [C(i,1), C(i,2)];
            # add lines on the curve graph
             %% plot a line between two points using plot([x1,x2],[y1,y2])
-            plot([-30,25],[h,h]);
+            plot(ax1,[-30,25],[h,h]);
             text(26, h-(wood_width/2), sprintf("R,h (%0.2f, %0.2f)",C(i,1),h));
             
             hold on;           
@@ -66,10 +85,36 @@ for a = 5.30
         
     end
     
-    print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng')
-    # closereq();
-    close();
+
+    #close();
 
   end
 
 end
+
+# plot frames
+ax2 = subplot(2,1,2);
+hold on;
+plot(ax2, x,y);
+axis([-35 45 0 hive_height]);
+yend = 0;
+
+# 3.8 cm distance between honeycombs
+for x = -19 :3.8:20 
+     
+    #find the y for the intersection between the frame and the hive side, 
+    # add +2 to make room to the bees
+    ystart = 40
+    
+    #considering maxlength as the diff between Ystart and wood_width -2
+    
+    
+    yend = max(find_y_in_matrix(C,x) +2, wood_width +2);    
+    plot(ax2,[x x], [ystart yend]);   
+
+    h = text(x, 45, sprintf("(%0.2f, %0.2f)",x, ystart - yend));
+    # get_nearest_y
+    set(h,'Rotation',90);
+end
+
+    print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng')
