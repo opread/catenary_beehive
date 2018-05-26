@@ -125,8 +125,8 @@ plot(ax2, x,y);
 axis([-35 45 0 hive_height]);
 yend = 0;
 
-#store calculated frames in frames matrix
-frames=[];
+#Calculate the frame max height
+frames_height=[];
 
 # 3.8 cm distance between honeycombs
 
@@ -144,8 +144,8 @@ for cur_height = -19 :3.8:19
     set(h,'Rotation',90);
     
     #append the new frame to frames matrix
-    new_frame = [ystart - yend];
-    frames=[frames; new_frame];
+    new_frame = [ystart - yend, cur_height];
+    frames_height=[frames_height; new_frame];
 end
 print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
 hold off
@@ -156,30 +156,73 @@ hold off
 
 n=1;
 shrink = 2;
-frames=round(frames*10^n)/10^n;
-uniqueframes = unique(frames);
-fig = figure(2);
-for i = 1:length(uniqueframes)
-  ax3 = subplot(length(uniqueframes),1,i);
-  axis([-35 45 0 hive_height]);
-  title(sprintf("Frame size: %0.1f",uniqueframes(i)));
-  hold on;
-  yend = uniqueframes(i);
-  line(ax3,[0 0], [ystart - uniqueframes(i) ystart]);
+#selet the positiv values as the calculations are the same
+frames_height=frames_height(frames_height(:,2)>0,:);
 
-  # plot points on the side
+# distinct frame shapes
+fig = figure(2);
+
+# iterate through each distinct frame raduis and calculate the frame dimensions and area
+frames_sections = [];
+for i = length(frames_height):-1:1
+  
+  % find the circle bow length for each ring
+  cur_frame_radius = frames_height(i,2);
+  cur_frame_height = frames_height(i,1);
+  ring_index = length(rings) # ring from the top 
+
+  
+  while (ring_index>1) 
+    cur_ring_radius = rings(ring_index,1);
+    frame_section_tmp =2*  pitagora(a=0, b = cur_frame_radius, c = cur_ring_radius);
+
+    if cur_ring_radius - cur_frame_radius <0.5
+      break
+    else
+      # cur_frame_height, cur_frame_radius, cur_ring_radius, frame_section
+      frames_sections = [frames_sections, [frames_height(i,1), cur_frame_radius, cur_ring_radius, frame_section_tmp]];
+      ring_index -=1; 
+    end
+
+   
+   
+  end
+end  
+
+
+frames = transpose(reshape(frames_sections, 4 , length(frames_sections)/4));
+
+
+%{
+  # one plot for each frame, 
+  ax3 = subplot(1,length(frames_height),i);
+  hold on;
+  axis([-25 25 0 frames_height(i)]);
+  title(sprintf("Frame size: %0.1f",frames_height(i)));
+
+  yend = frames_height(i);
+  # draw the current frame height 
+  line(ax3,[0 0], [0 frames_height(i)]);
+
+  # plot frame sections for each ring paralel to the hive side
   xtmp = [];
   ytmp = [];
-  for cur_y = ystart - uniqueframes(i):wood_width:ystart
-    cur_x = find_x_in_matrix(C,cur_y)
-    ytmp = [ytmp cur_y];
-    xtmp = [xtmp cur_x];
-    text(cur_x+2, cur_y, sprintf("(%0.2f, %0.2f)",cur_x, cur_y));
+  yadjfactor = ystart - frames_height(i);  % we want to plot from y=0 by subtracting yadjfactor
+  
+  for cur_y = ystart - frames_height(i):wood_width:ystart
+    
+    tmp_x = find_x_in_matrix(C,cur_y);
+    tmp_y = cur_y - yadjfactor; 
+   
+    ytmp = [ytmp tmp_y];
+    xtmp = [xtmp tmp_x]; # we make the frame a little smaller, by "shrink" cm
+    
+    
+    text( tmp_x,  tmp_y, sprintf("(%0.2f, %0.2f)",tmp_x, tmp_y));
   end 
   #plot points after adjusting the size by shrink param
-  plot(ax3, xtmp-shrink,ytmp);
-
-  plot(ax3, -xtmp+shrink,ytmp);  
+  plot(ax3,xtmp,ytmp);
+  plot(ax3,-xtmp,ytmp);  
   
-end
+%}
 
