@@ -81,7 +81,7 @@ for a = 5.23
     #save myfile.mat C;
 
     rings = [,];
-    for h = 0:wood_width:45
+    for h = 0:wood_width:hive_height
       i = 3;
       while (i <= rows(C))
          if (C(i-1,2) < h && C(i,2) >= h)
@@ -112,7 +112,7 @@ end
 fig = figure(2);
 hold on;
 plot(x,y);
-axis([-35 45 0 hive_height+10]);
+axis([-35 hive_height 0 hive_height+10]);
 yend = 0;
 
 frames_height=[];
@@ -128,7 +128,7 @@ for cur_height = -19 :3.8:19
     yend = max(find_y_in_matrix(C,cur_height) +2, wood_width +2);    
     
     plot([cur_height cur_height], [ystart yend]);   
-    h = text(cur_height, 45, sprintf("(%0.2f, %0.2f)",cur_height, ystart - yend));
+    h = text(cur_height, hive_height, sprintf("(%0.2f, %0.2f)",cur_height, ystart - yend));
     # get_nearest_y
     set(h,'Rotation',90);
     
