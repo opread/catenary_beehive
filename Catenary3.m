@@ -145,14 +145,22 @@ hold off;
 #selet the positiv values as the calculations are the same
 frames_height=frames_height(frames_height(:,2)>=0,:);
 
-# iterate through each distinct frame raduis (on top) and calculate the frame dimensions and area
+# 3.1 iterate through each distinct frame raduis (on top) and calculate the frame dimensions and area
 
 
 
 frames_sections = [];
 shrink_frame_width = 1.5;
 frame_wood_width  = 1;
-
+  #     -1.8-
+  # 0.5 ||||||||||  |
+  #          ||||| 1.8
+  #          |||||  |
+woodtop_height  = 1.8;
+woodtop_shoulder_width = 0.5;
+woodtop_shoulder = 1.8;
+woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
+total_area = 0;
 
 for i = length(frames_height):-1:1
   % find the circle bow length for each ring
@@ -160,7 +168,7 @@ for i = length(frames_height):-1:1
   cur_frame_height = frames_height(i,1);
   ring_index = length(rings); # ring from the top 
   top_ring = ring_index;
-
+  axis([-35 60 0 50]);; 
   
   while (ring_index>1) 
     cur_ring_radius = rings(ring_index,1);
@@ -172,10 +180,10 @@ for i = length(frames_height):-1:1
      # the frame exceeds the currrnt ring, we stop
       break
     else
-      frame_section_tmp =2*  pitagora(a=0, b = cur_frame_radius, c = cur_ring_radius)-shrink_frame_width;
+      frame_section_tmp =  pitagora(a=0, b = cur_frame_radius, c = cur_ring_radius)-shrink_frame_width;
     end
     
-    # add data into a vector for later use
+    # add frames section data into a vector for later use
     # structure: index of frame, cur_frame_height, cur_frame_radius, cur_ring_radius, frame_section
     frames_sections = [frames_sections, [i, frames_height(i,1), cur_frame_radius, cur_ring_radius, frame_section_tmp]];
     ring_index -=1; 
@@ -200,6 +208,7 @@ for i = length(unique_frames):-1:1
   countfig+=1;
   cur_frame = frames(frames(:,1)==i,:);
   cur_frame_height = cur_frame(1,2);
+  cur_frame_radius = cur_frame(1,3);
   fig = figure(countfig);
  
   hold on;
@@ -242,32 +251,20 @@ for i = length(unique_frames):-1:1
   # draw the frame inner margins
 
   plot(xtmp-frame_wood_width,ytmp);
-  plot(-xtmp+frame_wood_width,ytmp);   
-  
-  axis([-xtmp(1,5)-18 xtmp(1,5)+28 0 cur_frame_height+6]);;  
+  plot(-xtmp+frame_wood_width,ytmp);    
   
   # frame height vertical line
   line([0 0], [0 cur_frame_height]);
   cur_frame_maxwidth = xtmp(1,5);
-  
-#     -1.8-
-# 0.5 ||||||||||  |
-#          ||||| 1.8
-#          |||||  |
-woodtop_height  = 1.8;
-woodtop_shoulder_width = 0.5;
-woodtop_shoulder = 1.8;
-woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
+
+# dadant top bar dimensions
+  text( 10,  tmp_y+3, sprintf("woodtop height: %0.2f" ,woodtop_height));
+  text( 10,  tmp_y+4, sprintf("woodtop shoulder width: %0.2f" ,woodtop_shoulder_width));  
+  text( 10,  tmp_y+5, sprintf("woodtop shoulder length: %0.2f" ,woodtop_shoulder));  
+  text( 10,  tmp_y+6, sprintf("woodtop shoulder cut: %0.2f" ,woodtop_shoulder_cut));  
 
 #shoulder on the right
   line([tmp_x tmp_x], [tmp_y tmp_y+woodtop_shoulder_cut]);
-
-  text( tmp_x + 3,  tmp_y+3, sprintf("woodtop height: %0.2f" ,woodtop_height));
-  text( tmp_x + 3,  tmp_y+4, sprintf("woodtop shoulder width: %0.2f" ,woodtop_shoulder_width));  
-  text( tmp_x + 3,  tmp_y+5, sprintf("woodtop shoulder length: %0.2f" ,woodtop_shoulder));  
-  text( tmp_x + 3,  tmp_y+6, sprintf("woodtop shoulder cut: %0.2f" ,woodtop_shoulder_cut));  
-
-  
   line([tmp_x tmp_x+woodtop_shoulder], [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut]);   
   line([tmp_x+woodtop_shoulder tmp_x+woodtop_shoulder], 
     [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut+woodtop_shoulder_width]);  
@@ -283,12 +280,30 @@ woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
     [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut]);      
   line([-tmp_x -tmp_x], [tmp_y+woodtop_shoulder_cut tmp_y]);
   
-  title(sprintf("Frame: %0.0f, w: %0.1f, h: %0.1f frame wood: %0.1f",i,cur_frame_maxwidth,cur_frame_height,frame_wood_width));
+  title(sprintf("Frame: %0.0f, w: %0.1f, h: %0.1f radius: %0.1f",i,xtmp(length(xtmp)),cur_frame_height,cur_frame_radius));
+  hold off;
+  # calculate area by approximation = summing trapezoid segments areas
+  segm = length(ytmp);
+  frame_area = 0;
+  tmp_area = 0;
+  for i = segm:-1:2
+   segm_a = 2*(xtmp(i)-frame_wood_width);
+   segm_b = 2*(xtmp(i-1)-frame_wood_width);
+   segm_h = wood_width;
+   tmp_area = ((segm_a + segm_b)* segm_h) / 2
+   frame_area = frame_area + tmp_area;
+  end
+  text(-tmp_x ,  tmp_y+3, sprintf("Frame area: %0.2f cm2" ,frame_area));  
 
-# calculate area 
- 
-# save frames
- plot(figure(countfig))
- print(sprintf("Frame_%0.0f.jpg",i), '-dpng');
- hold off;
+
+
+  # save frames
+
+   print(sprintf("Frame_%0.0f.jpg",countfig-2), '-dpng');
+
+   
+   total_area +=frame_area;
 end
+
+total_area -=frame_area;
+disp(sprintf("Total_area: %0.0f.",total_area));
