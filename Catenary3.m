@@ -195,11 +195,12 @@ hive_height = rings(length(rings),2);
 unique_frames =  unique(frames(:,1));
 
 # pass through each distinct frame shape
+countfig=2;
 for i = length(unique_frames):-1:1
-
-  cur_frame = frames(frames(:,1)==i,:)
+  countfig+=1;
+  cur_frame = frames(frames(:,1)==i,:);
   cur_frame_height = cur_frame(1,2);
-  fig = figure(i+1);
+  fig = figure(countfig);
  
   hold on;
   
@@ -281,9 +282,13 @@ woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
   line([-tmp_x-woodtop_shoulder -tmp_x], 
     [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut]);      
   line([-tmp_x -tmp_x], [tmp_y+woodtop_shoulder_cut tmp_y]);
-
-   
+  
   title(sprintf("Frame: %0.0f, w: %0.1f, h: %0.1f frame wood: %0.1f",i,cur_frame_maxwidth,cur_frame_height,frame_wood_width));
-  print(sprintf("Frame_%0.0f_w:_%0.1f_h_%0.1f.jpg",i,cur_frame_maxwidth,cur_frame_height), '-dpng');
-  hold off;
+
+# calculate area 
+ 
+# save frames
+ plot(figure(countfig))
+ print(sprintf("Frame_%0.0f.jpg",i), '-dpng');
+ hold off;
 end
