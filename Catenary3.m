@@ -43,8 +43,6 @@ function result = find_y_in_matrix(mat,x)
       i += 1;
     end
 end     
-        
-
 
 
 ####### 1 calculate the rings of the hive body  ####################
@@ -75,10 +73,9 @@ for a = 5.23
   [x, y] = catenary(s, w, a);;
     # draw the catenary curve
     fig = figure(1);
-    ax1 = subplot(2,1,1);
     title(sprintf("Params a,w: %0.2f,%0.2f",a,w));
     hold on;
-    plot(ax1,x,y);
+    plot(x,y);
     axis([-35 45 0 hive_height]);
     C = [x; y]';
     #save myfile.mat C;
@@ -91,7 +88,7 @@ for a = 5.23
            new_row = [C(i,1), C(i,2)];
            # add lines on the curve graph
             %% plot a line between two points using plot([x1,x2],[y1,y2])
-            plot(ax1,[-30,25],[h,h]);
+            plot([-30,25],[h,h]);
             text(26, h-(wood_width/2), sprintf("R,h (%0.2f, %0.2f)",C(i,1),h));
             
             hold on;           
@@ -102,7 +99,9 @@ for a = 5.23
         
     end
     
-
+    #print picture
+    print(sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
+    hold off;
     #close();
 
   end
@@ -110,10 +109,10 @@ for a = 5.23
 end
 
 ###### 2 Calculate frames positioning +  positioning ############################
-ax2 = subplot(2,1,2);
+fig = figure(2);
 hold on;
-plot(ax2, x,y);
-axis([-35 45 0 hive_height]);
+plot(x,y);
+axis([-35 45 0 hive_height+10]);
 yend = 0;
 
 frames_height=[];
@@ -128,7 +127,7 @@ for cur_height = -19 :3.8:19
     #considering maxlength as the diff between Ystart and wood_width -2
     yend = max(find_y_in_matrix(C,cur_height) +2, wood_width +2);    
     
-    plot(ax2,[cur_height cur_height], [ystart yend]);   
+    plot([cur_height cur_height], [ystart yend]);   
     h = text(cur_height, 45, sprintf("(%0.2f, %0.2f)",cur_height, ystart - yend));
     # get_nearest_y
     set(h,'Rotation',90);
@@ -137,8 +136,8 @@ for cur_height = -19 :3.8:19
     new_frame = [ystart - yend, cur_height];
     frames_height=[frames_height; new_frame];
 end
-print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
-hold off
+print(sprintf("Frames_position_in_hive_%0.2f_%0.2f.jpg",a,w), '-dpng');
+hold off;
 
 
 #### 3 Calculate the frames shapes ###############
@@ -147,11 +146,15 @@ hold off
 frames_height=frames_height(frames_height(:,2)>=0,:);
 
 # iterate through each distinct frame raduis (on top) and calculate the frame dimensions and area
+
+
+
 frames_sections = [];
 shrink_frame_width = 1.5;
+frame_wood_width  = 1;
+
 
 for i = length(frames_height):-1:1
-  
   % find the circle bow length for each ring
   cur_frame_radius = frames_height(i,2);
   cur_frame_height = frames_height(i,1);
@@ -188,25 +191,21 @@ frames = round(frames*10^n)/10^n;
 #the hive height
 hive_height = rings(length(rings),2);
 
-# plot distinct frames after rounding the values to 2 decimals
+# identify unique frames by the position given by radius
 unique_frames =  unique(frames(:,1));
-for i =1:length(unique_frames)
+
+# pass through each distinct frame shape
+for i = length(unique_frames):-1:1
 
   cur_frame = frames(frames(:,1)==i,:)
   cur_frame_height = cur_frame(1,2);
-  cur_frame_maxwidth = cur_frame(1,5);
-  
-  # one plot for each frame, 
-  
-# distinct frame shapes
   fig = figure(i+1);
-  axis([-35 35 0  cur_frame(1,2)]);
-  title(sprintf("Frame no: %0.0f, w: %0.1f, h: %0.1f",i,cur_frame_maxwidth,cur_frame_height));
+ 
   hold on;
   
   # draw the current frame (wip)
   ## draw  vertical line from 0 to height
-  line([0 0], [0 cur_frame_height]);
+
 
   # plot frame sections for each ring paralel to the hive side
   xtmp = [];
@@ -215,19 +214,76 @@ for i =1:length(unique_frames)
   
   # pass through each ring, skip the 1st one (as we place antivarroa bottom there)
   cur_ring=length(cur_frame);
-  for tmp_y = 2*wood_width:wood_width:hive_height-yadjfactor
+
+  for tmp_y = 0:wood_width:hive_height-yadjfactor
     tmp_x = cur_frame(cur_ring,5);
    
     ytmp = [ytmp tmp_y];
     xtmp = [xtmp tmp_x]; # we make the frame a little smaller, by "shrink" cm
+  
+    # plot points 
+    plot(tmp_x,tmp_y,'rx')  
+    plot(tmp_x-frame_wood_width ,tmp_y,'rx') 
+     
+    # plot the current frame section
+    line([-tmp_x tmp_x], [tmp_y tmp_y]); 
     
-    
-    text( tmp_x,  tmp_y, sprintf("(%0.2f, %0.2f)",tmp_x, tmp_y));
+    # add point coordinates
+    text( tmp_x + 1,  tmp_y, sprintf("(%0.2f, %0.2f)",tmp_x, tmp_y));
     cur_ring-=1;
   end 
   #plot points after adjusting the size by shrink param
-  plot(xtmp,ytmp);
-  plot(-xtmp,ytmp);  
   
+  # draw the frame outer margins
+  plot(xtmp,ytmp);
+  plot(-xtmp,ytmp); 
+  
+  # draw the frame inner margins
 
+  plot(xtmp-frame_wood_width,ytmp);
+  plot(-xtmp+frame_wood_width,ytmp);   
+  
+  axis([-xtmp(1,5)-18 xtmp(1,5)+28 0 cur_frame_height+6]);;  
+  
+  # frame height vertical line
+  line([0 0], [0 cur_frame_height]);
+  cur_frame_maxwidth = xtmp(1,5);
+  
+#     -1.8-
+# 0.5 ||||||||||  |
+#          ||||| 1.8
+#          |||||  |
+woodtop_height  = 1.8;
+woodtop_shoulder_width = 0.5;
+woodtop_shoulder = 1.8;
+woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
+
+#shoulder on the right
+  line([tmp_x tmp_x], [tmp_y tmp_y+woodtop_shoulder_cut]);
+
+  text( tmp_x + 3,  tmp_y+3, sprintf("woodtop height: %0.2f" ,woodtop_height));
+  text( tmp_x + 3,  tmp_y+4, sprintf("woodtop shoulder width: %0.2f" ,woodtop_shoulder_width));  
+  text( tmp_x + 3,  tmp_y+5, sprintf("woodtop shoulder length: %0.2f" ,woodtop_shoulder));  
+  text( tmp_x + 3,  tmp_y+6, sprintf("woodtop shoulder cut: %0.2f" ,woodtop_shoulder_cut));  
+
+  
+  line([tmp_x tmp_x+woodtop_shoulder], [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut]);   
+  line([tmp_x+woodtop_shoulder tmp_x+woodtop_shoulder], 
+    [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut+woodtop_shoulder_width]);  
+
+#long woodtop
+  line([tmp_x+woodtop_shoulder -tmp_x-woodtop_shoulder], 
+    [tmp_y+woodtop_shoulder_cut+woodtop_shoulder_width tmp_y+woodtop_shoulder_cut+woodtop_shoulder_width]);  
+
+#shoulder on the left 
+  line([-tmp_x-woodtop_shoulder -tmp_x-woodtop_shoulder], 
+    [tmp_y+woodtop_shoulder_cut+woodtop_shoulder_width tmp_y+woodtop_shoulder_cut]);
+  line([-tmp_x-woodtop_shoulder -tmp_x], 
+    [tmp_y+woodtop_shoulder_cut tmp_y+woodtop_shoulder_cut]);      
+  line([-tmp_x -tmp_x], [tmp_y+woodtop_shoulder_cut tmp_y]);
+
+   
+  title(sprintf("Frame: %0.0f, w: %0.1f, h: %0.1f frame wood: %0.1f",i,cur_frame_maxwidth,cur_frame_height,frame_wood_width));
+  print(sprintf("Frame_%0.0f_w:_%0.1f_h_%0.1f.jpg",i,cur_frame_maxwidth,cur_frame_height), '-dpng');
+  hold off;
 end
