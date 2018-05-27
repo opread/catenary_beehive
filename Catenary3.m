@@ -1,13 +1,10 @@
-# Dadant
-# top frame: 470 / 435 X 27
-# frame height: 37 to 27 X 300 X 6
-# |----|
-# |____|
 
- 
 % Prevent Octave from thinking that this
 % is a function file:
 1;
+clear all;
+
+############# Helper functions used in the program #####################
 
 function [a, b, c] = pitagora(a=0 ,b=0, c=0)
   # function that calculate triangle sides with pitagora
@@ -47,21 +44,15 @@ function result = find_y_in_matrix(mat,x)
     end
 end     
         
-# numeric search for the corresponding x for a given y in an 2 dim matrix
-function result = find_x_in_matrix(mat,y)
-  i = 3;
-    while (i <= rows(mat))
-      if (mat(i-1,2) < y && mat(i,2) >= y)
-        result =  mat(i,1);
-        break
-      endif  
-      i += 1;
-    end
-end         
-        
 
 
 
+####### 1 calculate the rings of the hive body  ####################
+# Dadant
+# top frame: 470 / 435 X 27
+# frame height: 37 to 27 X 300 X 6
+# |----|
+# |____|
 
 ## http://www.beginningbeekeeping.com/BeeFaqs.htm
 ## one bee has max 5/8 inch length = 1.58 cm
@@ -118,14 +109,13 @@ for a = 5.23
 
 end
 
-# plot frames positioning
+###### 2 Calculate frames positioning +  positioning ############################
 ax2 = subplot(2,1,2);
 hold on;
 plot(ax2, x,y);
 axis([-35 45 0 hive_height]);
 yend = 0;
 
-#Calculate the frame max height
 frames_height=[];
 
 # 3.8 cm distance between honeycombs
@@ -151,78 +141,93 @@ print(fig, sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
 hold off
 
 
+#### 3 Calculate the frames shapes ###############
 
-# plot distinct frames after rounding the values to 2 decimals
-
-n=1;
-shrink = 2;
 #selet the positiv values as the calculations are the same
-frames_height=frames_height(frames_height(:,2)>0,:);
+frames_height=frames_height(frames_height(:,2)>=0,:);
 
-# distinct frame shapes
-fig = figure(2);
-
-# iterate through each distinct frame raduis and calculate the frame dimensions and area
+# iterate through each distinct frame raduis (on top) and calculate the frame dimensions and area
 frames_sections = [];
+shrink_frame_width = 1.5;
+
 for i = length(frames_height):-1:1
   
   % find the circle bow length for each ring
   cur_frame_radius = frames_height(i,2);
   cur_frame_height = frames_height(i,1);
-  ring_index = length(rings) # ring from the top 
+  ring_index = length(rings); # ring from the top 
+  top_ring = ring_index;
 
   
   while (ring_index>1) 
     cur_ring_radius = rings(ring_index,1);
-    frame_section_tmp =2*  pitagora(a=0, b = cur_frame_radius, c = cur_ring_radius);
-
-    if cur_ring_radius - cur_frame_radius <0.5
+    
+    if cur_frame_radius == 0
+      frame_section_tmp = cur_ring_radius - shrink_frame_width;
+      
+    elseif cur_ring_radius - cur_frame_radius <0.5
+     # the frame exceeds the currrnt ring, we stop
       break
     else
-      # cur_frame_height, cur_frame_radius, cur_ring_radius, frame_section
-      frames_sections = [frames_sections, [frames_height(i,1), cur_frame_radius, cur_ring_radius, frame_section_tmp]];
-      ring_index -=1; 
+      frame_section_tmp =2*  pitagora(a=0, b = cur_frame_radius, c = cur_ring_radius)-shrink_frame_width;
     end
-
-   
-   
+    
+    # add data into a vector for later use
+    # structure: index of frame, cur_frame_height, cur_frame_radius, cur_ring_radius, frame_section
+    frames_sections = [frames_sections, [i, frames_height(i,1), cur_frame_radius, cur_ring_radius, frame_section_tmp]];
+    ring_index -=1; 
   end
 end  
 
+# reshape the vection in a matrix with 5 colmns and n rows
+frames = transpose(reshape(frames_sections, 5 , length(frames_sections)/5));
 
-frames = transpose(reshape(frames_sections, 4 , length(frames_sections)/4));
+#round values to one decimal to nearest (mm)
+n=2;
+frames = round(frames*10^n)/10^n;
+#the hive height
+hive_height = rings(length(rings),2);
 
+# plot distinct frames after rounding the values to 2 decimals
+unique_frames =  unique(frames(:,1));
+for i =1:length(unique_frames)
 
-%{
+  cur_frame = frames(frames(:,1)==i,:)
+  cur_frame_height = cur_frame(1,2);
+  cur_frame_maxwidth = cur_frame(1,5);
+  
   # one plot for each frame, 
-  ax3 = subplot(1,length(frames_height),i);
+  
+# distinct frame shapes
+  fig = figure(i+1);
+  axis([-35 35 0  cur_frame(1,2)]);
+  title(sprintf("Frame no: %0.0f, w: %0.1f, h: %0.1f",i,cur_frame_maxwidth,cur_frame_height));
   hold on;
-  axis([-25 25 0 frames_height(i)]);
-  title(sprintf("Frame size: %0.1f",frames_height(i)));
-
-  yend = frames_height(i);
-  # draw the current frame height 
-  line(ax3,[0 0], [0 frames_height(i)]);
+  
+  # draw the current frame (wip)
+  ## draw  vertical line from 0 to height
+  line([0 0], [0 cur_frame_height]);
 
   # plot frame sections for each ring paralel to the hive side
   xtmp = [];
   ytmp = [];
-  yadjfactor = ystart - frames_height(i);  % we want to plot from y=0 by subtracting yadjfactor
+  yadjfactor = hive_height - cur_frame_height;  % we want to plot from y=0 by subtracting yadjfactor
   
-  for cur_y = ystart - frames_height(i):wood_width:ystart
-    
-    tmp_x = find_x_in_matrix(C,cur_y);
-    tmp_y = cur_y - yadjfactor; 
+  # pass through each ring, skip the 1st one (as we place antivarroa bottom there)
+  cur_ring=length(cur_frame);
+  for tmp_y = 2*wood_width:wood_width:hive_height-yadjfactor
+    tmp_x = cur_frame(cur_ring,5);
    
     ytmp = [ytmp tmp_y];
     xtmp = [xtmp tmp_x]; # we make the frame a little smaller, by "shrink" cm
     
     
     text( tmp_x,  tmp_y, sprintf("(%0.2f, %0.2f)",tmp_x, tmp_y));
+    cur_ring-=1;
   end 
   #plot points after adjusting the size by shrink param
-  plot(ax3,xtmp,ytmp);
-  plot(ax3,-xtmp,ytmp);  
+  plot(xtmp,ytmp);
+  plot(-xtmp,ytmp);  
   
-%}
 
+end
