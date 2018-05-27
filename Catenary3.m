@@ -150,6 +150,7 @@ frames_height=frames_height(frames_height(:,2)>=0,:);
 
 
 frames_sections = [];
+frames_area = [];
 shrink_frame_width = 1.5;
 frame_wood_width  = 1;
   #     -1.8-
@@ -160,7 +161,7 @@ woodtop_height  = 1.8;
 woodtop_shoulder_width = 0.5;
 woodtop_shoulder = 1.8;
 woodtop_shoulder_cut = woodtop_shoulder - woodtop_shoulder_width ;
-total_area = 0;
+
 
 for i = length(frames_height):-1:1
   % find the circle bow length for each ring
@@ -286,24 +287,27 @@ for i = length(unique_frames):-1:1
   segm = length(ytmp);
   frame_area = 0;
   tmp_area = 0;
-  for i = segm:-1:2
-   segm_a = 2*(xtmp(i)-frame_wood_width);
-   segm_b = 2*(xtmp(i-1)-frame_wood_width);
+  for k = segm:-1:2
+   segm_a = 2*(xtmp(k)-frame_wood_width);
+   segm_b = 2*(xtmp(k-1)-frame_wood_width);
    segm_h = wood_width;
-   tmp_area = ((segm_a + segm_b)* segm_h) / 2
+   tmp_area = ((segm_a + segm_b)* segm_h) / 2;
    frame_area = frame_area + tmp_area;
   end
   text(-tmp_x ,  tmp_y+3, sprintf("Frame area: %0.2f cm2" ,frame_area));  
-
+  frames_area = [frames_area [i,cur_frame_height,cur_frame_radius,frame_area]];
+  
 
 
   # save frames
-
    print(sprintf("Frame_%0.0f.jpg",countfig-2), '-dpng');
-
-   
-   total_area +=frame_area;
 end
 
-total_area -=frame_area;
+### sum frames area
+total_area=0;
+frames_area = transpose(reshape(frames_area, 4 , length(frames_area)/4));
+frames_area = round(frames_area*10^n)/10^n;
+
+#each frame is used twice, except the center one
+total_area =sum(frames_area(:,4)) + sum(frames_area(1:length(frames_area)-1,4)); 
 disp(sprintf("Total_area: %0.0f.",total_area));
