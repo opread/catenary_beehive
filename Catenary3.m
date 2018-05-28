@@ -4,6 +4,44 @@
 1;
 clear all;
 
+############# Helper functions used in the program #####################
+
+  # function that calculate triangle sides with Pythagorean theorem
+function [a, b, c] = pitagora(a=0 ,b=0, c=0)
+
+  if length(find([a,b,c]>0)) < 2
+      error ("not enough input arguments");
+    else
+      if c == 0 
+          c = (a**2 + b**2)**(1/2);
+       elseif a==0
+         a = (c**2 - b**2)**(1/2);
+       else 
+         b = (c**2 - a**2)**(1/2);     
+       end 
+    end
+end
+
+  
+## calculate catenary curve
+function [x, y] = catenary(s,w,a) 
+  x = s;
+  # y=a*cosh((x)/a) - a;
+    y = w*(cosh(x/a)-1);
+end
+
+
+# numeric search for the corresponding y for a given x in an 2 dim matrix
+function result = find_y_in_matrix(mat,x)
+  i = 3;
+    while (i <= rows(mat))
+      if (mat(i-1,1) < x && mat(i,1) >= x)
+        result =  mat(i,2);
+        break
+      endif  
+      i += 1;
+    end
+end     
 
 
 ####### 1 calculate the rings of the hive body  ####################
@@ -275,43 +313,3 @@ disp(sprintf("Total_area: %0.0f.",total_area));
 figure(1);
 text(5,5, sprintf("Total area: %0.0f.",total_area)); 
 print(sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
-
-
-############# Helper functions used in the program #####################
-
-  # function that calculate triangle sides with Pythagoras' theorem
-function [a, b, c] = pitagora(a=0 ,b=0, c=0)
-
-  if length(find([a,b,c]>0)) < 2
-      error ("not enough input arguments");
-    else
-      if c == 0 
-          c = (a**2 + b**2)**(1/2);
-       elseif a==0
-         a = (c**2 - b**2)**(1/2);
-       else 
-         b = (c**2 - a**2)**(1/2);     
-       end 
-    end
-end
-
-  
-## calculate catenary curve
-function [x, y] = catenary(s,w,a) 
-  x = s;
-  # y=a*cosh((x)/a) - a;
-    y = w*(cosh(x/a)-1);
-end
-
-
-# numeric search for the corresponding y for a given x in an 2 dim matrix
-function result = find_y_in_matrix(mat,x)
-  i = 3;
-    while (i <= rows(mat))
-      if (mat(i-1,1) < x && mat(i,1) >= x)
-        result =  mat(i,2);
-        break
-      endif  
-      i += 1;
-    end
-end     
