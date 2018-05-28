@@ -60,6 +60,8 @@ end
 ## I needed to tweak the T to get into a workable catenary shape
 % s, the length of the chain in increments used to calculate the catenary
 s = [-50:0.01:50]; % meters
+save_img  = false;
+
 
 # dimensions
 hive_height = 45;
@@ -67,7 +69,7 @@ hive_max_width = 45;  #+ wood
 wood_width = 2.4;
 
 for a = 5.23
-  for w =1.20
+    for w =1.20
   
   [x, y] = catenary(s, w, a);;
     # draw the catenary curve
@@ -99,7 +101,10 @@ for a = 5.23
     end
     
     #print picture
-    print(sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
+    config_txt = sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w)
+    if save_img == true
+        print(config_txt, '-dpng');
+    end
     hold off;
     #close();
 
@@ -135,7 +140,10 @@ for cur_height = -19 :3.8:19
     new_frame = [ystart - yend, cur_height];
     frames_height=[frames_height; new_frame];
 end
-print(sprintf("Frames_position_in_hive_%0.2f_%0.2f.jpg",a,w), '-dpng');
+    if save_img == true
+        print(sprintf("Frames_position_in_hive_%0.2f_%0.2f.jpg",a,w), '-dpng');
+    end
+        
 hold off;
 
 
@@ -297,7 +305,9 @@ for i = length(unique_frames):-1:1
 
 
   # save frames
-   print(sprintf("Frame_%0.0f.jpg",countfig-2), '-dpng');
+   if save_img == true
+      print(sprintf("Frame_%0.0f.jpg",countfig-2), '-dpng');
+   end
 end
 
 ### sum frames area
@@ -307,9 +317,9 @@ frames_area = transpose(reshape(frames_area, 4 , length(frames_area)/4));
 frames_area = round(frames_area*10^n)/10^n;
 total_area =sum(frames_area(:,4)) + sum(frames_area(1:length(frames_area)-1,4)); 
 
-disp(sprintf("Catenary_a_w_%0.2f_%0.2f",a,w));
+disp(config_txt);
 disp(sprintf("Total_area: %0.0f.",total_area));
 
 figure(1);
 text(5,5, sprintf("Total area: %0.0f.",total_area)); 
-print(sprintf("Catenary_a_w_%0.2f_%0.2f.jpg",a,w), '-dpng');
+print(config_txt, '-dpng');
