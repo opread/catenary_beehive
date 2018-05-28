@@ -60,7 +60,7 @@ end
 ## I needed to tweak the T to get into a workable catenary shape
 % s, the length of the chain in increments used to calculate the catenary
 s = [-50:0.01:50]; % meters
-save_img  = false;
+save_img  = true;
 
 
 # dimensions
